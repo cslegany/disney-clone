@@ -1,86 +1,93 @@
-import type { NextPage } from 'next'
-import Head from 'next/head'
-import Image from 'next/image'
+import { getSession, useSession } from "next-auth/client";
+import Head from "next/head";
+import Brands from "../components/Brands";
+import MoviesCollection from "../components/MoviesCollection";
+import Header from "../components/Header";
+import Hero from "../components/Hero";
+import Slider from "../components/Slider";
+import ShowsCollection from "../components/ShowsCollection";
+import { MovieResult } from "../model/Model";
+import { BASE_URL } from "../utils/requests";
 
-const Home: NextPage = () => {
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-center py-2">
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main className="flex w-full flex-1 flex-col items-center justify-center px-20 text-center">
-        <h1 className="text-6xl font-bold">
-          Welcome to{' '}
-          <a className="text-blue-600" href="https://nextjs.org">
-            Next.js!
-          </a>
-        </h1>
-
-        <p className="mt-3 text-2xl">
-          Get started by editing{' '}
-          <code className="rounded-md bg-gray-100 p-3 font-mono text-lg">
-            pages/index.tsx
-          </code>
-        </p>
-
-        <div className="mt-6 flex max-w-4xl flex-wrap items-center justify-around sm:w-full">
-          <a
-            href="https://nextjs.org/docs"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Documentation &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Find in-depth information about Next.js features and API.
-            </p>
-          </a>
-
-          <a
-            href="https://nextjs.org/learn"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Learn &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Learn about Next.js in an interactive course with quizzes!
-            </p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/canary/examples"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Examples &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Discover and deploy boilerplate example Next.js projects.
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Deploy &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
-
-      <footer className="flex h-24 w-full items-center justify-center border-t">
-        <a
-          className="flex items-center justify-center gap-2"
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
-        </a>
-      </footer>
-    </div>
-  )
+interface HomePageProps {
+  popularMovies: MovieResult[],
+  popularShows: MovieResult[],
+  top_ratedMovies: MovieResult[],
+  top_ratedShows: MovieResult[]
 }
 
-export default Home
+const Home: NextPage = ({ popularMovies, popularShows, top_ratedMovies, top_ratedShows }: HomePageProps) => {
+  const [session] = useSession();
+
+  return (
+    <div>
+      <Head>
+        <title>
+          Disney+ | The streaming home of Disney, Pixar, Marvel, Star Wars, Nat
+          Geo and Star
+        </title>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      <Header />
+      {/* {!session ? (
+        <Hero />
+      ) : ( */}
+        <main className="relative min-h-screen after:bg-home after:bg-center after:bg-cover after:bg-no-repeat after:bg-fixed after:absolute after:inset-0 after:z-[-1]">
+          <Slider />
+          <Brands />
+          <MoviesCollection results={popularMovies} title="Popular Movies" />
+          <ShowsCollection results={popularShows} title="Popular Shows" />
+
+          <MoviesCollection
+            results={top_ratedMovies}
+            title="Top Rated Movies"
+          />
+          <ShowsCollection results={top_ratedShows} title="Top Rated Shows" />
+        </main>
+      {/* )} */}
+    </div>
+  );
+}
+
+export default Home;
+
+export async function getServerSideProps(context) {
+  const session = await getSession(context);
+
+  const [
+    popularMoviesRes,
+    popularShowsRes,
+    top_ratedMoviesRes,
+    top_ratedShowsRes,
+  ] = await Promise.all([
+    fetch(
+      `${BASE_URL}/movie/popular?api_key=${process.env.API_KEY}&language=en-US&page=1`
+    ),
+    fetch(
+      `${BASE_URL}/tv/popular?api_key=${process.env.API_KEY}&language=en-US&page=1`
+    ),
+    fetch(
+      `${BASE_URL}/movie/top_rated?api_key=${process.env.API_KEY}&language=en-US&page=1`
+    ),
+    fetch(
+      `${BASE_URL}/tv/top_rated?api_key=${process.env.API_KEY}&language=en-US&page=1`
+    ),
+  ]);
+  const [popularMovies, popularShows, top_ratedMovies, top_ratedShows] =
+    await Promise.all([
+      popularMoviesRes.json(),
+      popularShowsRes.json(),
+      top_ratedMoviesRes.json(),
+      top_ratedShowsRes.json(),
+    ]);
+
+  return {
+    props: {
+      session,
+      popularMovies: popularMovies.results,
+      popularShows: popularShows.results,
+      top_ratedMovies: top_ratedMovies.results,
+      top_ratedShows: top_ratedShows.results,
+    },
+  };
+} 

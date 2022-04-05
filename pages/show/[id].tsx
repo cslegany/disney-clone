@@ -7,18 +7,23 @@ import Header from "../../components/Header";
 import Hero from "../../components/Hero";
 import { PlusIcon, XIcon } from "@heroicons/react/solid";
 import ReactPlayer from "react-player/lazy";
+import { BASE_URL, IMG_BASE_URL, YOUTUBE_URL } from "../../utils/requests";
+import { MovieDetails } from "../../model/Model";
 
-function Show({ result }) {
+interface ShowPageProps {
+  result: MovieDetails;
+}
+
+const Show = ({ result }: ShowPageProps) => {
   const [session] = useSession();
-  const BASE_URL = "https://image.tmdb.org/t/p/original/";
   const router = useRouter();
   const [showPlayer, setShowPlayer] = useState(false);
 
-  useEffect(() => {
-    if (!session) {
-      router.push("/");
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (!session) {
+  //     router.push("/");
+  //   }
+  // }, []);
 
   const index = result.videos.results.findIndex(
     (element) => element.type === "Trailer"
@@ -31,15 +36,15 @@ function Show({ result }) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Header />
-      {!session ? (
+      {/* {!session ? (
         <Hero />
-      ) : (
+      ) : ( */}
         <section className="relative z-50">
           <div className="relative min-h-[calc(100vh-72px)]">
             <Image
               src={
-                `${BASE_URL}${result.backdrop_path || result.poster_path}` ||
-                `${BASE_URL}${result.poster_path}`
+                `${IMG_BASE_URL}${result.backdrop_path || result.poster_path}` ||
+                `${IMG_BASE_URL}${result.poster_path}`
               }
               layout="fill"
               objectFit="cover"
@@ -51,11 +56,7 @@ function Show({ result }) {
             </h1>
             <div className="flex items-center space-x-3 md:space-x-5">
               <button className="text-xs md:text-base bg-[#f9f9f9] text-black flex items-center justify-center py-2.5 px-6 rounded hover:bg-[#c6c6c6]">
-                <img
-                  src="/images/play-icon-black.svg"
-                  alt=""
-                  className="h-6 md:h-8"
-                />
+                <img src="/images/play-icon-black.svg" alt="" className="h-6 md:h-8" />
                 <span className="uppercase font-medium tracking-wide">
                   Play
                 </span>
@@ -65,11 +66,7 @@ function Show({ result }) {
                 className="text-xs md:text-base bg-black/30 text-[#f9f9f9] border border-[#f9f9f9] flex items-center justify-center py-2.5 px-6 rounded hover:bg-[#c6c6c6]"
                 onClick={() => setShowPlayer(true)}
               >
-                <img
-                  src="/images/play-icon-white.svg"
-                  alt=""
-                  className="h-6 md:h-8"
-                />
+                <img src="/images/play-icon-white.svg" alt="" className="h-6 md:h-8" />
                 <span className="uppercase font-medium tracking-wide">
                   Trailer
                 </span>
@@ -114,7 +111,7 @@ function Show({ result }) {
             </div>
             <div className="relative pt-[56.25%]">
               <ReactPlayer
-                url={`https://www.youtube.com/watch?v=${result.videos?.results[index]?.key}`}
+                url={`${YOUTUBE_URL}${result.videos?.results[index]?.key}`}
                 width="100%"
                 height="100%"
                 style={{ position: "absolute", top: "0", left: "0" }}
@@ -124,7 +121,7 @@ function Show({ result }) {
             </div>
           </div>
         </section>
-      )}
+      {/* )} */}
     </div>
   );
 }
@@ -136,7 +133,7 @@ export async function getServerSideProps(context) {
   const { id } = context.query;
 
   const request = await fetch(
-    `https://api.themoviedb.org/3/tv/${id}?api_key=${process.env.API_KEY}&language=en-US&append_to_response=videos`
+    `${BASE_URL}/tv/${id}?api_key=${process.env.API_KEY}&language=en-US&append_to_response=videos`
   ).then((response) => response.json());
 
   return {
